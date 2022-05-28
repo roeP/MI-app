@@ -1,6 +1,6 @@
 #!/usr/bin/env groovy
 
-node {
+node ('ec2-fleet') {
 	stage('Environment Setup') {
 		properties([
 			buildDiscarder(logRotator(numToKeepStr: '10'))
