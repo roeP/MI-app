@@ -10,14 +10,24 @@ node {
 			checkout(scm)
 		}
     stage('ECR Repo Init') {
-        git url: 'git@github.com:roeP/MI-infra.git'
         dir('MI-infra') {
-            sh 'ls'
+            git branch: 'main',
+                url: 'git@github.com:roeP/MI-infra.git',
+                credentialsId: 'github-creds'
+        }
+        dir('MI-infra/live/ecr') {
+            docker.image("hashicorp/terraform:1.0.7").inside("-u root:root --entrypoint=''") {
+                sh """
+                    terraform init --reconfigure -backend-config key="ecr.state"
+                    terraform plan -input=false
+                    terraform apply -auto-approve=true -input=false
+                """
+            }
         }
     }
 
     stage('Docker Build') {
-
+        sh 'docker build -t mi-app -f MI-app/Dockerfile ./MI-app'
     }
 
     stage('Docker Push') {
