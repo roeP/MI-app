@@ -45,14 +45,7 @@ node ('ec2-fleet') {
         }
 
         stage('Docker Push') {
-            withCredentials([[
-                $class: 'AmazonWebServicesCredentialsBinding',
-                credentialsId: "AWS",
-                accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-            ]]) {
-                sh "docker push ${ECR_REPO}/mi-app:${BUILD_NUMBER}"
-            }
+            sh "docker push ${ECR_REPO}/mi-app:${BUILD_NUMBER}"
         }
     }
 }
