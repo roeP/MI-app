@@ -31,17 +31,23 @@ node ('ec2-fleet') {
                             terraform plan -input=false
                             terraform apply -auto-approve=true -input=false
                         """
+                        env.ECR_REPO=sh (
+                            script: 'terraform output -raw repository_url',
+                            returnStdout: true
+                        )
                     }
                 }
             }
         }
 
         stage('Docker Build') {
-            sh 'docker build -t mi-app -f MI-app/Dockerfile ./MI-app'
+            dir('MI-app') {
+                sh "docker build -t ${ECR_REPO}/mi-app:${BUILD_NUMBER} -f MI-app/Dockerfile ./MI-app"
+            }
         }
 
         stage('Docker Push') {
-
+            sh "docker push"
         }
     }
 }
