@@ -41,13 +41,11 @@ node ('ec2-fleet') {
         }
 
         stage('Docker Build') {
-            dir('MI-app') {
-                sh "docker build -t ${ECR_REPO}/mi-app:${BUILD_NUMBER} -f MI-app/Dockerfile ./MI-app"
-            }
+            sh "docker build -t ${ECR_REPO}/mi-app:${BUILD_NUMBER} ."
         }
 
         stage('Docker Push') {
-            sh "docker push"
+            sh "docker push ${ECR_REPO}/mi-app:${BUILD_NUMBER}"
         }
     }
 }
