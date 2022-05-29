@@ -15,8 +15,9 @@ node ('ec2-fleet') {
                 url: 'git@github.com:roeP/MI-infra.git',
                 credentialsId: 'github-creds'
         }
-        dir('MI-infra/live/ecr') {
-            docker.image("hashicorp/terraform:1.0.7").inside("-u root:root --entrypoint=''") {
+        
+        docker.image("hashicorp/terraform:1.0.7").inside("-u root:root --entrypoint=''") {
+            dir('MI-infra/live/ecr') {
                 sh """
                     terraform init --reconfigure -backend-config key="ecr.state"
                     terraform plan -input=false
