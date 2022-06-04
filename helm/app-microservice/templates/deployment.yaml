@@ -6,11 +6,6 @@ metadata:
   labels:
     app: {{ .Values.serviceName }}
     version: {{ .Values.deployment.version }}
-    {{- if .Values.Datadog.enabled }}
-    tags.datadoghq.com/env: {{ .Values.Datadog.environment }}
-    tags.datadoghq.com/service: {{ .Values.serviceName }}
-    tags.datadoghq.com/team: {{ .Values.teamName }}
-    {{- end }}
 spec:
   replicas: {{ .Values.deployment.replicaCount }}
   selector:
@@ -19,154 +14,17 @@ spec:
   template:
     metadata:
       labels:
-        {{- if .Values.Datadog.enabled }}
-        tags.datadoghq.com/env: {{ .Values.Datadog.environment }}
-        tags.datadoghq.com/service: {{ .Values.serviceName }}
-        tags.datadoghq.com/team: {{ .Values.teamName }}
-        {{- end }}
         app: {{ .Values.serviceName }}
         version: {{ .Values.deployment.version }}
       annotations:
         sidecar.istio.io/inject: "{{ .Values.deployment.enable_istio | default true }}"
-      {{- range $key, $value := .Values.deployment.annotations }}
-        {{ $key }}: {{ $value | quote }}
-      {{- end }}
     spec:
-      {{- if .Values.antiaffinity.enabled }}
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values:
-                - {{ .Values.serviceName }}
-            topologyKey: kubernetes.io/hostname
-      {{- end }}
-      {{- if .Values.serviceAccount.enabled }}
-      serviceAccountName: {{ .Values.serviceName }}
-      {{- end }}
-      {{- if .Values.dockerAuth.enabled }}
-      imagePullSecrets:
-      - name: {{ .Values.dockerAuth.secretName }}
-      {{- end }}
       containers:
         - name: app
           image: {{.Values.image }}
           imagePullPolicy: {{.Values.deployment.pullPolicy }}
-          {{- if .Values.Datadog.enabled }}
-          env:
-            - name: DD_AGENT_HOST
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.hostIP
-            - name: DD_ENV
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.labels['tags.datadoghq.com/env']
-            - name: DD_SERVICE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.labels['tags.datadoghq.com/service']
-          {{- end }}
-          envFrom:
-            - configMapRef:
-                name:  {{ .Values.serviceName }}-configmap
-            - secretRef:
-                name: {{ .Values.serviceName }}-secrets
-          {{- if .Values.podResources.enabled }}
-          resources:
-            requests:
-              {{- if .Values.podMemory.enabled }}
-              memory: {{ .Values.podMemory.memory }}
-              {{- end }}
-              {{- if .Values.podCpu.enabled }}
-              cpu: {{ .Values.podCpu.cpu }}
-              {{- end }}
-            limits:
-              {{- if .Values.podMemory.enabled }}
-              memory: {{ .Values.podMemory.memoryLimit }}
-              {{- end }}
-              {{- if .Values.podCpu.enabled }}
-              cpu: {{ .Values.podCpu.cpuLimit }}
-              {{- end }}
-          {{- end }}
           ports:
             - containerPort: {{ .Values.deployment.nodePort }}
-          {{- if .Values.volumeMounts.enabled }}
-          volumeMounts:
-          - name: {{ .Values.volumeMounts.volumeName }}
-            mountPath: {{ .Values.volumeMounts.mountPath }}
-          {{- end }}
-          {{- if .Values.deployment.command }}
-          command: {{ .Values.deployment.command }}
-          {{- end }}
-          {{- if .Values.deployment.args }}
-          args: {{ .Values.deployment.args }}
-          {{- end }}
-          {{- if .Values.deployment.healthcheck.liveness.enabled }}
-          livenessProbe:
-            httpGet:
-              path: {{ .Values.deployment.healthcheck.liveness.path }}
-              port: {{ .Values.deployment.nodePort }}
-            initialDelaySeconds: {{ .Values.deployment.healthcheck.liveness.startDelay }}
-            periodSeconds: {{ .Values.deployment.healthcheck.liveness.interval }}
-            timeoutSeconds: {{ .Values.deployment.healthcheck.liveness.timeout }}
-            successThreshold: {{ .Values.deployment.healthcheck.liveness.successThreshold }}
-            failureThreshold: {{ .Values.deployment.healthcheck.liveness.failureThreshold }}
-          {{- end }}
-          {{- if .Values.deployment.healthcheck.startupProbe.enabled }}
-          startupProbe:
-            httpGet:
-              path: {{ .Values.deployment.startupProbe.path }}
-              port: {{ .Values.deployment.nodePort }}
-            failureThreshold: {{ .Values.deployment.startupProbe.failureThreshold }}
-            successThreshold: {{ .Values.deployment.startupProbe.successThreshold }}
-          {{- end }}
-          {{- if .Values.deployment.healthcheck.readiness.enabled }}
-          readinessProbe:
-            httpGet:
-              path: {{ .Values.deployment.healthcheck.readiness.path }}
-              port: {{ .Values.deployment.nodePort }}
-            initialDelaySeconds: {{ .Values.deployment.healthcheck.readiness.startDelay }}
-            periodSeconds: {{ .Values.deployment.healthcheck.readiness.interval }}
-            timeoutSeconds: {{ .Values.deployment.healthcheck.readiness.timeout }}
-            successThreshold: {{ .Values.deployment.healthcheck.readiness.successThreshold }}
-            failureThreshold: {{ .Values.deployment.healthcheck.readiness.failureThreshold }}
-          {{- end }}
-          {{- if .Values.deployment.healthcheckCurl.liveness.enabled }}
-          livenessProbe:
-            exec:
-              command:
-                - curl
-                - "http://localhost:{{ .Values.deployment.nodePort }}{{ .Values.deployment.healthcheckCurl.liveness.path }}"
-            initialDelaySeconds: {{ .Values.deployment.healthcheckCurl.liveness.startDelay }}
-            periodSeconds: {{ .Values.deployment.healthcheckCurl.liveness.interval }}
-            timeoutSeconds: {{ .Values.deployment.healthcheckCurl.liveness.timeout }}
-            successThreshold: {{ .Values.deployment.healthcheckCurl.liveness.successThreshold }}
-            failureThreshold: {{ .Values.deployment.healthcheckCurl.liveness.failureThreshold }}
-          {{- end }}
-          {{- if .Values.deployment.healthcheckCurl.startupProbe.enabled }}
-          startupProbe:
-            httpGet:
-              path: {{ .Values.deployment.healthcheckCurl.startupProbe.path }}
-              port: {{ .Values.deployment.healthcheckCurl.startupProbe.port }}
-            failureThreshold: {{ .Values.deployment.healthcheckCurl.startupProbe.failureThreshold }}
-            successThreshold: {{ .Values.deployment.healthcheckCurl.startupProbe.successThreshold }}
-          {{- end }}
-          {{- if .Values.deployment.healthcheckCurl.readiness.enabled }}
-          readinessProbe:
-            exec:
-              command:
-                - curl
-                - "http://localhost:{{ .Values.deployment.nodePort }}{{ .Values.deployment.healthcheckCurl.readiness.path }}"
-            initialDelaySeconds: {{ .Values.deployment.healthcheckCurl.readiness.startDelay }}
-            periodSeconds: {{ .Values.deployment.healthcheckCurl.readiness.interval }}
-            timeoutSeconds: {{ .Values.deployment.healthcheckCurl.readiness.timeout }}
-            successThreshold: {{ .Values.deployment.healthcheckCurl.readiness.successThreshold }}
-            failureThreshold: {{ .Values.deployment.healthcheckCurl.readiness.failureThreshold }}
-          {{- end }}
       {{- if .Values.deployment.nodeSelector.enabled }}
       nodeSelector:
         nodeGroupName	: {{ .Values.deployment.nodeSelector.nodeGroupName }}
@@ -177,10 +35,4 @@ spec:
         operator: {{ .Values.deployment.tolerations.operator }}
         value: {{ .Values.deployment.tolerations.value }}
         effect: {{ .Values.deployment.tolerations.effect }}
-      {{- end }}
-      {{- if .Values.volumeMounts.enabled }}
-      volumes:
-      - name: {{ .Values.volumeMounts.volumeName }}
-        persistentVolumeClaim:
-          claimName: {{ .Values.volumeMounts.claimName }}
       {{- end }}

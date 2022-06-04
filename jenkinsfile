@@ -69,8 +69,8 @@ node ('ec2-fleet') {
                 sh "aws eks --region us-east-1 update-kubeconfig --name mi"
                 dir("helm/app-microservice") {
                     sh """
-                    helm upgrade --install --wait --atomic app \
-                    --set image=${ECR_REPO}:${BUILD_NUMBER} 
+                    helm upgrade --install --wait --atomic \
+                    --set image=${ECR_REPO}:${BUILD_NUMBER} app . 
                     """
                 }
             }
