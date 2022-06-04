@@ -47,5 +47,21 @@ node ('ec2-fleet') {
         stage('Docker Push') {
             sh "docker push ${ECR_REPO}:${BUILD_NUMBER}"
         }
+
+        stage('Deploy') {
+            sh 'echo "Deploy to Kubernetes"'
+            withCredentials([[
+                $class: 'AmazonWebServicesCredentialsBinding',
+                credentialsId: "AWS",
+                accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+            ]]) {
+                sh "aws eks --region us-east-1 update-kubeconfig --name mi"
+                dir("helm"){
+                    helm upgrade --install --wait --atomic app \
+                    --set image=${ECR_REPO}:${BUILD_NUMBER} 
+                }
+            }
+        }
     }
 }
