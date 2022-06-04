@@ -1,0 +1,27 @@
+namespace:
+  name: default
+
+serviceName: app
+
+virtualService:
+  host: app
+
+deployment:
+  pullPolicy: Always
+  nodePort: 8080
+  version: v1
+  replicaCount: "1"
+  nodeSelector:
+    enabled: true
+    nodeGroupName: apps
+  tolerations:
+    enabled: true
+    key: nodeGroupName
+    operator: Equal
+    value: apps
+    effect: NoSchedule
+  
+    
+service:
+  type: ClusterIP
+  nodePort: ""
