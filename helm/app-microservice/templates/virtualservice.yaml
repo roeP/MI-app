@@ -7,12 +7,11 @@ spec:
   gateways:
     - {{ .Values.namespace.name }}-gateway
   hosts:
-    - {{ .Values.virtualService.host }}
+    - "*"
   http:
   - route:
     - destination:
         host: {{.Values.serviceName }}
-        subset: {{ .Values.deployment.version }}
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
@@ -21,9 +20,6 @@ metadata:
   name: {{ .Values.serviceName }}
 spec:
   host: {{ .Values.serviceName }}
-  trafficPolicy:
-    tls:
-      mode: ISTIO_MUTUAL
   subsets:
   - name: {{ .Values.deployment.version }}
     labels:
