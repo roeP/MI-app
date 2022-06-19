@@ -1,5 +1,7 @@
 FROM python:3.8-alpine
 
+RUN apk update
+
 # Create application user
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup -u 1001
 
